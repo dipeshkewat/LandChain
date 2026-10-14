@@ -1,0 +1,536 @@
+LANDCHAIN
+Blockchain-Based Land Registry System
+IMPLEMENTATION SPECIFICATION FOR AN AI CODING AGENT
+Intermediate level • Solidity • Remix VM • React • Node.js • PostgreSQL
+
+PurposeGive this document to your AI coding agent as the primary build specification. The agent should inspect the existing workspace, implement the application in working increments, run tests, document limitations, and avoid claiming that untested features work.
+
+Prototype for education and demonstration only
+
+0. Instructions to the AI Coding Agent
+Execution modeBuild the application in the current workspace. Do not stop after producing a plan or mockups. Inspect the repository first, preserve useful existing code, implement the MVP, run available tests/builds, fix errors, and report what is actually complete.
+
+First inspect the repository, package manager, current code, environment files, and installed dependencies. Do not overwrite a working project without understanding it.
+If the workspace is empty, create the folder structure and initialize the frontend, backend, database schema, and smart-contract project.
+Implement in small milestones: contract and tests; backend and database; frontend; integration; final verification.
+Use environment variables for configuration. Create .env.example with placeholders only. Never print, commit, or hard-code secrets.
+Do not claim Remix VM is directly accessible to a standalone web app. Build and test the Solidity contract in Remix VM, and provide a clear integration adapter. For end-to-end browser integration, use a compatible local JSON-RPC EVM such as a local development chain, or document the Remix-only demo boundary.
+If a required external service or credential is unavailable, implement the parts that can be tested locally and document the blocker rather than fabricating a successful integration.
+Use synthetic demonstration data only. Do not use real personal, property, deed, or financial information.
+Keep code readable, modular, commented where necessary, and suitable for a student to explain in a viva.
+After implementation, provide exact setup commands, test commands, environment variable names, and a concise list of completed, incomplete, and unverified features.
+1. Product Definition
+1.1 Product summary
+LandChain is a web application prototype for registering property records, recording the current on-chain owner, validating owner-initiated ownership transfers, maintaining a transaction history, and checking document integrity through SHA-256 hashes. Solidity smart-contract rules are the enforcement layer for registration and transfer operations. PostgreSQL stores searchable application metadata and indexed/cached event information.
+1.2 Problem statement
+Land-record workflows can involve fragmented records, slow verification, unauthorized modifications, duplicate entries, and difficulty tracing ownership changes. LandChain demonstrates how smart contracts and tamper-evident event histories can improve traceability and make unauthorized state changes detectable.
+1.3 Objectives
+Register unique property identifiers and initial owner addresses through an authorized smart contract function.
+Allow only the currently recorded owner to initiate a valid ownership transfer.
+Display recorded ownership and a traceable history of registration and transfers.
+Generate and compare SHA-256 document hashes to detect byte-level content changes.
+Build a usable web dashboard with property search, transaction status, and verification results.
+Test authorization failures, invalid inputs, duplicate IDs, and database/blockchain consistency.
+1.4 Scope and explicit limitations
+Included: property registration, property search, owner lookup, owner-initiated transfer, document hash verification, transaction history, admin dashboard, API, and PostgreSQL metadata.
+Excluded: official government registry integration, legal title adjudication, production identity verification, real-estate payments, legal dispute resolution, and production deployment.
+The application demonstrates recorded ownership on its blockchain. It does not establish legal ownership or prove that submitted documents are genuine.
+Do not store personal identity documents, full deeds, private keys, or sensitive owner data on a public blockchain.
+The first target is a local educational prototype. Do not describe it as production-ready.
+2. Required Technology Stack
+Layer
+Technology
+Requirement
+Frontend
+React + Vite + Tailwind CSS
+Responsive light-theme dashboard
+Routing
+React Router
+Separate pages for all core workflows
+Backend
+Node.js + Express
+REST API, validation, metadata operations
+Database
+PostgreSQL
+Normalized tables, constraints, migrations
+Smart contract
+Solidity ^0.8.20
+LandChain ownership rules
+Contract development
+Remix IDE + Remix VM
+Initial deployment and manual validation
+EVM integration
+ethers.js adapter
+Keep contract calls isolated behind a service
+Hashing
+SHA-256
+Hash raw uploaded file bytes consistently
+Authentication
+Secure session or JWT implementation
+Role-based application routes
+Testing
+Contract tests + API tests + frontend build
+Automated checks and documented manual tests
+
+Critical blockchain environment constraintRemix VM runs inside Remix and is not a standard persistent JSON-RPC node exposed to a separate React/Express application. Do not invent a Remix VM RPC URL. Compile and test the contract in Remix VM; for a genuinely integrated local app, use a local EVM JSON-RPC development chain with the same contract ABI and bytecode. Document this distinction in the README.
+
+3. Architecture and Data Flow
+Architecture:
+[ React + Tailwind UI ]
+          |
+          | HTTPS/JSON REST requests
+          v
+[ Node.js + Express API ] -------- [ PostgreSQL ]
+          |
+          | blockchain adapter / ethers.js
+          v
+[ EVM smart contract ]
+  - authorized registration
+  - recorded owner
+  - validated transfer
+  - document hash
+  - events / transaction history
+PostgreSQL is used for searchable property metadata, user accounts, private document references, transfer transaction tracking, and indexed event data. The contract is authoritative for the on-chain property owner and contract-level rules. Cached database fields must be reconciled against contract state/events.
+3.1 Transaction flow
+A user opens the registration form and submits property metadata and a document.
+The backend validates the request, computes SHA-256 over the uploaded file bytes, and saves an off-chain metadata record in a pending state.
+An authorized admin submits the contract registration transaction. Do not mark the record confirmed before the transaction succeeds.
+After confirmation, save the transaction hash and reconcile the property state/event into PostgreSQL.
+For transfers, the current owner's wallet signs and submits the transaction. The contract validates msg.sender and recipient address.
+The backend records transaction status and synchronizes confirmed events. If the chain operation fails, the UI must show failure and must not claim ownership changed.
+For verification, hash the supplied file bytes and compare the hash to the registered on-chain document hash.
+4. Roles and Permissions
+Role
+Allowed actions
+Restrictions
+Admin / land authority
+Register property; view admin dashboard; inspect records
+Cannot silently overwrite owner; contract authorization always applies
+Property owner
+Search/view property; initiate transfer from current owner wallet; view history
+Cannot transfer a property they do not currently own
+Public viewer
+Search allowed public records; verify a supplied document hash; view public history
+Read-only; no registration or transfer
+
+For the MVP, implement admin and owner workflows first. Public search should expose only non-sensitive data. Application roles must not replace contract-level authorization. In an integrated wallet flow, the signed wallet address is the source of the caller identity for contract actions.
+5. Smart Contract Requirements
+5.1 Data model
+struct Property {
+    uint256 id;
+    address owner;
+    bytes32 documentHash;
+    uint256 registeredAt;
+    bool exists;
+}
+ 
+mapping(uint256 => Property) public properties;
+address public admin;
+5.2 Required functions
+Function
+Access
+Expected behavior
+constructor()
+Deployment
+Sets deployer as initial admin
+registerProperty(id, initialOwner, documentHash)
+Admin only
+Reject ID zero, duplicate ID, zero owner, and empty hash; store record and emit event
+transferOwnership(id, newOwner)
+Current owner only
+Reject missing property, unauthorized caller, zero address, and same owner; update owner and emit event
+getProperty(id)
+Read
+Return current owner, document hash, and registration timestamp; fail clearly for missing property
+verifyDocument(id, candidateHash)
+Read
+Return whether candidate hash equals registered document hash
+
+5.3 Required events
+PropertyRegistered(propertyId, owner, documentHash)
+OwnershipTransferred(propertyId, previousOwner, newOwner)
+DocumentHashUpdated(propertyId, documentHash) only if controlled hash updates are implemented
+5.4 Contract security rules
+Use Solidity ^0.8.20 or another explicitly tested compatible compiler version.
+Only the admin can register a property.
+Only the current owner can initiate a transfer.
+Reject duplicate property IDs, zero addresses, invalid IDs, and zero document hashes.
+Do not add an unrestricted admin owner-overwrite function.
+Do not implement a token, cryptocurrency, or Proof-of-Work mining; these are not required.
+Write tests for both success and revert cases. Do not treat a successful compile as proof of correctness.
+6. Database Schema
+Create versioned SQL migrations. Use UUID primary keys for application records, foreign keys, unique constraints, timestamps, and indexes for common search paths.
+6.1 users
+Column
+Type
+Rules / meaning
+id
+UUID
+Primary key
+name
+VARCHAR(120)
+Required display name
+email
+VARCHAR(255)
+Unique, required
+password_hash
+TEXT
+Password hash only; never plaintext
+wallet_address
+VARCHAR(42)
+Nullable EVM address; normalize/validate
+role
+VARCHAR(20)
+admin, owner, viewer; constrained values
+created_at
+TIMESTAMPTZ
+Default current timestamp
+
+6.2 properties
+Column
+Type
+Rules / meaning
+id
+UUID
+Primary key
+property_code
+VARCHAR(80)
+Unique human-readable property code
+location
+TEXT
+Required non-sensitive location
+area_sq_m
+NUMERIC(12,2)
+Positive area
+description
+TEXT
+Optional public description
+document_hash
+CHAR(64)
+SHA-256 hex string
+document_uri
+TEXT
+Nullable private storage reference
+current_owner_address
+VARCHAR(42)
+Cached owner; reconcile with contract
+blockchain_property_id
+NUMERIC(78,0)
+Nullable contract ID; use safe bigint handling in JS
+created_by
+UUID
+Foreign key to users.id
+registration_tx_hash
+VARCHAR(66)
+Nullable until submitted/confirmed
+chain_status
+VARCHAR(20)
+pending, confirmed, failed, needs_reconciliation
+created_at
+TIMESTAMPTZ
+Default current timestamp
+
+6.3 ownership_transfers
+Column
+Type
+Rules / meaning
+id
+UUID
+Primary key
+property_id
+UUID
+Foreign key to properties.id
+from_address
+VARCHAR(42)
+Previous recorded owner
+to_address
+VARCHAR(42)
+New owner
+transaction_hash
+VARCHAR(66)
+Unique when present
+block_number
+BIGINT
+Nullable until confirmed
+status
+VARCHAR(20)
+pending, confirmed, failed
+created_at
+TIMESTAMPTZ
+Request timestamp
+
+6.4 audit_logs
+Column
+Type
+Rules / meaning
+id
+UUID
+Primary key
+user_id
+UUID
+Nullable FK to users.id
+action
+VARCHAR(80)
+Action name
+entity_type
+VARCHAR(40)
+property, transfer, user
+entity_id
+UUID
+Nullable related record
+details
+JSONB
+Non-sensitive event details
+created_at
+TIMESTAMPTZ
+Default current timestamp
+
+Database integrityNever treat a user-editable current_owner_address field as authoritative. It is a cache of the contract state. Record a transaction as confirmed only after verifying a successful transaction receipt and the corresponding event/state.
+
+7. REST API Specification
+Method + route
+Purpose
+Access
+POST /api/auth/register
+Create demo account
+Public with validation
+POST /api/auth/login
+Authenticate account
+Public with rate limit
+GET /api/properties
+Search/list properties with pagination
+Public-safe fields
+POST /api/properties
+Create metadata and begin registration flow
+Admin
+GET /api/properties/:id
+Retrieve property detail and reconciled owner
+Public-safe fields
+GET /api/properties/:id/history
+Retrieve registration and transfer history
+Public-safe history
+POST /api/properties/:id/verify-document
+Hash upload and compare to registered hash
+Public or authenticated; rate-limited
+POST /api/properties/:id/transfer
+Submit/facilitate owner-signed transfer
+Current owner wallet
+GET /api/transactions/:hash
+Retrieve transaction status
+Public-safe
+GET /api/admin/stats
+Dashboard summary
+Admin
+
+7.1 API conventions
+Return consistent JSON error objects with a safe message and HTTP status code.
+Validate path parameters, addresses, strings, numeric values, file types, and upload size.
+Use pagination for property listings and transaction history.
+Protect admin routes with authentication and role checks.
+Do not trust a client-supplied owner address as proof of wallet ownership.
+Use a wallet signature or a transaction sent from the current owner address for owner-authorized operations.
+For browser wallet flows, let the wallet sign the transaction; never ask for a private key or seed phrase.
+Make repeated requests idempotent where possible and handle pending transactions explicitly.
+8. Frontend Pages and UX
+Page
+Required UI elements
+Key behavior
+Dashboard
+Summary cards, recent events, navigation
+Shows counts derived from confirmed records
+Register Property
+Property code, location, area, owner address, document upload
+Displays document hash and chain status
+Property Search
+Search input, filters, results table
+Searches by code/location and shows recorded owner
+Property Detail
+Record metadata, current recorded owner, status
+Displays chain transaction references and history
+Transfer Ownership
+Property selection, current owner, recipient address
+Requests owner-signed transfer and shows pending/success/failure
+Transaction History
+Timeline/table, transaction hash, timestamp, previous/new owner
+Shows confirmed events and status
+Document Verification
+File upload, calculated hash, result status
+Shows match/mismatch and explains exact-byte semantics
+Admin
+Registration workflow, counts, audit activity
+Admin-only actions
+
+8.1 UI requirements
+Use a consistent light theme, responsive layout, accessible labels, keyboard navigation, and clear validation errors.
+Show loading, empty, pending, success, and failure states for all asynchronous operations.
+Do not show a success toast until the relevant operation is actually confirmed.
+Display long wallet addresses and transaction hashes with truncation plus a copy action.
+Use status labels such as Pending, Confirmed, Failed, and Needs reconciliation.
+Never label a record as legally verified. Use 'Blockchain record found' and 'Document hash matches'.
+9. Document Hashing
+Compute SHA-256 over the exact uploaded file bytes, producing a 32-byte digest. Store the digest on-chain as bytes32 and store the 64-character hexadecimal form in PostgreSQL. Use one documented normalization convention, such as lowercase hexadecimal without a 0x prefix in the database.
+Conceptual flow:
+file bytes -> SHA-256 -> 32-byte digest
+                         |
+                         +-> bytes32 sent to contract
+                         +-> 64-character hex stored off-chain
+ 
+Verification:
+uploaded bytes -> SHA-256 -> compare to registered on-chain digest
+Use the same raw-byte hashing method for registration and verification.
+Do not hash a filename or file path instead of the file contents.
+A one-byte change should produce a different digest with overwhelming probability.
+A mismatch means the file bytes differ from the registered file bytes; it does not by itself prove fraud.
+Keep full deed files off-chain and private. A hash can itself reveal equality or enable guessing attacks for predictable documents; consider access and privacy implications.
+10. Testing and Acceptance Criteria
+Test
+Expected result
+Admin registers valid new property
+Success; record/event exists
+Register same property ID twice
+Second call reverts
+Non-admin calls registerProperty
+Call reverts
+Owner transfers to valid different address
+Owner updates and event emits
+Non-owner tries transfer
+Call reverts
+Transfer to zero address
+Call reverts
+Transfer to current owner
+Call reverts
+Lookup unknown property
+Clear error/revert
+Verify original document
+Match = true
+Verify modified document
+Match = false
+Blockchain transaction fails
+No false success shown; failure status recorded
+Database cache is stale
+Reconciliation detects and corrects cache
+Build frontend and backend
+Build/test commands pass without errors
+Unauthenticated admin API call
+Rejected
+Oversized or unsupported file upload
+Rejected safely
+
+10.1 Definition of done
+Contract compiles and its positive and negative tests pass.
+Database migrations run on a clean local database.
+Backend validation and authorization tests pass.
+Frontend production build succeeds.
+The core registration, lookup, transfer, history, and document-verification workflows are demonstrated.
+README setup steps work on a clean checkout, with no secret credentials required.
+The app accurately describes the Remix VM integration boundary.
+All incomplete or manually demonstrated features are explicitly documented.
+11. Step-by-Step Build Order
+Milestone 1 — Repository inspection: Inspect existing code, tools, package manager, and dependencies. Summarize current state and preserve reusable files.
+Milestone 2 — Smart contract: Implement LandChain.sol, compile in Remix, add automated tests in the chosen contract test environment, and document manual Remix VM deployment steps.
+Milestone 3 — Database: Create migrations, constraints, indexes, and seed scripts with synthetic sample properties.
+Milestone 4 — Backend foundation: Set up Express, configuration validation, error handling, request validation, authentication, and role middleware.
+Milestone 5 — Data APIs: Implement property search/detail, audit records, document upload/hash verification, and transfer-status endpoints.
+Milestone 6 — Blockchain adapter: Create an isolated contract client with read, write, receipt verification, and event sync functions. Do not hard-code a fictional Remix VM endpoint.
+Milestone 7 — Frontend shell: Implement responsive navigation, dashboard layout, routing, and reusable status/loading/error components.
+Milestone 8 — Core workflows: Implement registration, search/detail, owner transfer, history, and document verification.
+Milestone 9 — Integration: Connect API and blockchain adapter; verify confirmed transaction handling and cache reconciliation.
+Milestone 10 — Final QA: Run tests and production builds, fix errors, document remaining gaps, and create a deterministic demo script.
+12. Suggested 16-Week Academic Schedule
+Weeks
+Work
+Deliverable
+1–2
+Requirements, diagrams, wireframes, schema
+Approved design and scope
+3–4
+Solidity contract and tests
+Tested contract and Remix demo
+5–6
+PostgreSQL migrations and REST API
+Working backend/data layer
+7–8
+Blockchain adapter and event handling
+Tested blockchain integration path
+9–10
+Dashboard and registration/search UI
+Usable frontend pages
+11–12
+Transfer, history, and document verification
+Core workflow complete
+13–14
+Integration, authorization, and failure testing
+Test report and bug fixes
+15–16
+Documentation, demo data, screenshots, presentation
+Final submission package
+
+13. Repository Structure
+landchain/
+├── contracts/
+│   ├── LandChain.sol
+│   └── test/
+├── frontend/
+│   └── src/
+│       ├── components/
+│       ├── pages/
+│       ├── services/
+│       │   ├── api.js
+│       │   └── blockchain.js
+│       └── App.jsx
+├── backend/
+│   └── src/
+│       ├── routes/
+│       ├── controllers/
+│       ├── services/
+│       ├── middleware/
+│       ├── db/
+│       └── app.js
+├── database/
+│   ├── migrations/
+│   └── seeds/
+├── docs/
+│   ├── architecture.md
+│   └── demo-script.md
+├── .env.example
+├── .gitignore
+└── README.md
+Adapt the structure if a repository already exists. Do not create duplicate frontend/backend apps or replace existing tooling without reason.
+14. Environment Configuration
+Create `.env.example` with placeholders and document required values. Do not commit a populated `.env` file.
+# Backend
+PORT=4000
+NODE_ENV=development
+DATABASE_URL=postgresql://USER:PASSWORD@localhost:5432/landchain
+SESSION_SECRET=replace_with_a_long_random_secret
+FRONTEND_ORIGIN=http://localhost:5173
+MAX_UPLOAD_MB=10
+ 
+# Blockchain adapter (only for an accessible local RPC chain)
+RPC_URL=http://127.0.0.1:8545
+LANDCHAIN_CONTRACT_ADDRESS=
+CHAIN_ID=
+Never invent credentialsDo not add real API keys, seed phrases, private keys, or production credentials. Use local test accounts and synthetic records. If a local RPC chain is not configured, the contract must still be testable in Remix, and the integration boundary must be clearly documented.
+
+15. Final Demonstration Script
+Start the database and backend; start the frontend.
+Open the admin dashboard and register a synthetic property such as LAND-1001.
+Show the document SHA-256 hash and the confirmed registration transaction or Remix VM evidence.
+Search for LAND-1001 and display the recorded owner and registration information.
+Switch to the owner account and transfer the property to a second test address.
+Show that a non-owner transfer attempt fails.
+Open transaction history and show the ownership-transfer event.
+Upload the original document and show a matching hash; upload a modified copy and show a mismatch.
+Explain the distinction between on-chain recorded ownership and legally verified title.
+End with the architecture, automated test results, and documented limitations.
+16. Required Final Report from the AI Agent
+When the build is complete, the agent must return a concise implementation report containing:
+What was implemented, with relevant file paths.
+Commands to install dependencies, configure the environment, run migrations, start the application, and run tests.
+Actual results of contract tests, backend tests, and frontend build.
+How to deploy/test the contract in Remix VM.
+How the integrated app reaches an EVM contract, or the exact boundary if Remix-only demonstration remains.
+Any incomplete, mocked, manually demonstrated, or unverified features.
+Known security and legal limitations.
+A step-by-step demo checklist.
+Final instructionBegin by inspecting the existing workspace and then build the smallest complete vertical slice: register a property, read it, transfer ownership as the current owner, and verify a document hash. Run the tests before adding optional dashboard polish. Do not stop at a plan, and do not claim completion without evidence.

@@ -1,0 +1,142 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { login, register } from "../services/api";
+import ErrorDisplay from "../components/ErrorDisplay";
+
+export default function LoginPage() {
+  const [isRegister, setIsRegister] = useState(false);
+  const [form, setForm] = useState({ name: "", email: "", password: "", wallet_address: "", role: "viewer" });
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      if (isRegister) {
+        await register(form);
+      } else {
+        await login(form.email, form.password);
+      }
+      navigate("/");
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateField = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
+
+  return (
+    <div className="auth-page-clean">
+      <div className="auth-card-clean">
+        <div className="auth-header-clean">
+          <div className="auth-brand-badge">L</div>
+          <h1>LandChain</h1>
+          <p className="auth-subtitle">Blockchain Land Registry Platform</p>
+        </div>
+
+        <div className="auth-tabs-clean">
+          <button
+            type="button"
+            className={`tab-btn-clean ${!isRegister ? "active" : ""}`}
+            onClick={() => setIsRegister(false)}
+          >
+            Sign In
+          </button>
+          <button
+            type="button"
+            className={`tab-btn-clean ${isRegister ? "active" : ""}`}
+            onClick={() => setIsRegister(true)}
+          >
+            Create Account
+          </button>
+        </div>
+
+        <ErrorDisplay error={error} />
+
+        <form onSubmit={handleSubmit} className="auth-form-clean">
+          {isRegister && (
+            <div className="form-group">
+              <label htmlFor="name">Full Name</label>
+              <input
+                id="name"
+                type="text"
+                value={form.name}
+                onChange={(e) => updateField("name", e.target.value)}
+                placeholder="Enter your name"
+                required
+              />
+            </div>
+          )}
+
+          <div className="form-group">
+            <label htmlFor="email">Email Address</label>
+            <input
+              id="email"
+              type="email"
+              value={form.email}
+              onChange={(e) => updateField("email", e.target.value)}
+              placeholder="admin@landchain.demo"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              value={form.password}
+              onChange={(e) => updateField("password", e.target.value)}
+              placeholder="••••••••"
+              required
+              minLength={6}
+            />
+          </div>
+
+          {isRegister && (
+            <>
+              <div className="form-group">
+                <label htmlFor="wallet">Wallet Address (Optional)</label>
+                <input
+                  id="wallet"
+                  type="text"
+                  value={form.wallet_address}
+                  onChange={(e) => updateField("wallet_address", e.target.value)}
+                  placeholder="0x..."
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="role">Role</label>
+                <select
+                  id="role"
+                  value={form.role}
+                  onChange={(e) => updateField("role", e.target.value)}
+                >
+                  <option value="viewer">Viewer (Public / Buyer)</option>
+                  <option value="owner">Owner (Property Seller)</option>
+                </select>
+              </div>
+            </>
+          )}
+
+          <button type="submit" className="btn btn-primary btn-full mt-3" disabled={loading}>
+            {loading ? "Authenticating..." : isRegister ? "Create Account" : "Sign In"}
+          </button>
+        </form>
+
+        <div className="auth-footer-clean">
+          <p className="demo-credentials-note">
+            <strong>Demo Credentials:</strong> admin@landchain.demo / admin123
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}

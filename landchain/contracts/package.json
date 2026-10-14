@@ -1,0 +1,15 @@
+{
+  "name": "landchain-contracts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LandChain smart contract and tests",
+  "scripts": {
+    "compile": "npx hardhat compile",
+    "test": "npx hardhat test",
+    "node": "npx hardhat node"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "hardhat": "^2.19.0"
+  }
+}

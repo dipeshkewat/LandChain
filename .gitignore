@@ -1,0 +1,31 @@
+# Dependencies
+**/node_modules/
+node_modules/
+
+# Environment files
+**/.env
+**/.env.*
+!.env.example
+
+# Build output
+**/dist/
+dist/
+
+# Hardhat artifacts
+**/contracts/artifacts/
+**/contracts/cache/
+**/contracts/typechain-types/
+
+# Uploads
+**/uploads/*
+!**/uploads/.gitkeep
+
+# Logs
+*.log
+**/*.log
+
+# OS & IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
