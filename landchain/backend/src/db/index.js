@@ -2,6 +2,8 @@ const { Pool } = require("pg");
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  // Neon and most cloud Postgres providers require SSL in production
+  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
 });
 
 // Log connection errors once (don't crash the app on transient failures)
