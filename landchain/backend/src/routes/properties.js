@@ -10,6 +10,8 @@ const blockchain = require("../services/blockchain");
 
 const router = express.Router();
 
+const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
 const MAX_UPLOAD_MB = parseInt(process.env.MAX_UPLOAD_MB || "10", 10);
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -152,7 +154,7 @@ router.post(
 // ── GET /api/properties/:id ─────────────────────────────────────────
 router.get(
   "/:id",
-  [param("id").isUUID().withMessage("Invalid property ID")],
+  [param("id").matches(UUID_REGEX).withMessage("Invalid property ID")],
   validate,
   async (req, res, next) => {
     try {
@@ -197,7 +199,7 @@ router.get(
 // ── GET /api/properties/:id/history ─────────────────────────────────
 router.get(
   "/:id/history",
-  [param("id").isUUID().withMessage("Invalid property ID")],
+  [param("id").matches(UUID_REGEX).withMessage("Invalid property ID")],
   validate,
   async (req, res, next) => {
     try {
@@ -224,7 +226,7 @@ router.get(
 // ── POST /api/properties/:id/verify-document ────────────────────────
 router.post(
   "/:id/verify-document",
-  [param("id").isUUID().withMessage("Invalid property ID")],
+  [param("id").matches(UUID_REGEX).withMessage("Invalid property ID")],
   validate,
   upload.single("document"),
   async (req, res, next) => {
@@ -274,7 +276,7 @@ router.post(
   "/:id/transfer",
   authenticate,
   [
-    param("id").isUUID().withMessage("Invalid property ID"),
+    param("id").matches(UUID_REGEX).withMessage("Invalid property ID"),
     body("to_address")
       .matches(/^0x[a-fA-F0-9]{40}$/)
       .withMessage("Valid recipient Ethereum address is required"),
