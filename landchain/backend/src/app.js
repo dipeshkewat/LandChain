@@ -17,7 +17,29 @@ const app = express();
 const PORT = parseInt(process.env.PORT || "4000", 10);
 
 // ── Middleware ───────────────────────────────────────────────────────
-app.use(cors({ origin: process.env.FRONTEND_ORIGIN || "http://localhost:5173", credentials: true }));
+const configuredOrigin = process.env.FRONTEND_ORIGIN
+  ? process.env.FRONTEND_ORIGIN.replace(/\/+$/, "")
+  : "http://localhost:5173";
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (curl, server-to-server, postman)
+      if (!origin) return callback(null, true);
+      const cleanOrigin = origin.replace(/\/+$/, "");
+      if (
+        cleanOrigin === configuredOrigin ||
+        cleanOrigin.endsWith(".netlify.app") ||
+        cleanOrigin.includes("localhost") ||
+        cleanOrigin.includes("127.0.0.1")
+      ) {
+        return callback(null, cleanOrigin);
+      }
+      return callback(null, cleanOrigin);
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
