@@ -68,7 +68,7 @@ router.get(
 
       const dataResult = await query(
         `SELECT id, property_code, location, area_sq_m, description,
-                current_owner_address, chain_status, created_at
+                document_hash, current_owner_address, chain_status, created_at
          FROM properties ${whereClause}
          ORDER BY created_at DESC
          LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
