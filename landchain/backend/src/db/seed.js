@@ -20,7 +20,8 @@ async function seed() {
   }
 
   console.log("[seed] All seeds applied.");
-  await pool.end();
+  const { unpooledPool } = require("./index");
+  await Promise.allSettled([pool.end(), unpooledPool && unpooledPool.end()]);
 }
 
 seed().catch((err) => {

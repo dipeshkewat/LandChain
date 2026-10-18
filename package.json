@@ -1,0 +1,14 @@
+{
+  "name": "landchain",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix landchain/frontend run build",
+    "test": "npm --prefix landchain/backend test",
+    "start": "node landchain/backend/src/app.js"
+  },
+  "dependencies": {
+    "@neon/config": "^1.9.2",
+    "@neon/env": "^1.6.3"
+  }
+}

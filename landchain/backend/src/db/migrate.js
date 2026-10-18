@@ -6,20 +6,21 @@ require("dotenv").config({ path: require("path").resolve(__dirname, "../../.env"
 
 const fs = require("fs");
 const path = require("path");
-const { pool, query } = require("./index");
+const { pool, unpooledPool, query } = require("./index");
+const migrateQuery = (text, params) => (unpooledPool || pool).query(text, params);
 
 const MIGRATIONS_DIR = path.resolve(__dirname, "../../../database/migrations");
 
 async function migrate() {
   // Ensure tracking table exists
-  await query(`
+  await migrateQuery(`
     CREATE TABLE IF NOT EXISTS schema_migrations (
       filename VARCHAR(255) PRIMARY KEY,
       applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);
 
-  const applied = await query("SELECT filename FROM schema_migrations ORDER BY filename");
+  const applied = await migrateQuery("SELECT filename FROM schema_migrations ORDER BY filename");
   const appliedSet = new Set(applied.rows.map((r) => r.filename));
 
   const files = fs.readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith(".sql")).sort();
@@ -31,13 +32,13 @@ async function migrate() {
     }
     const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, file), "utf-8");
     console.log(`[migrate] Applying: ${file}`);
-    await query(sql);
-    await query("INSERT INTO schema_migrations (filename) VALUES ($1)", [file]);
+    await migrateQuery(sql);
+    await migrateQuery("INSERT INTO schema_migrations (filename) VALUES ($1)", [file]);
     console.log(`[migrate] Done: ${file}`);
   }
 
   console.log("[migrate] All migrations applied.");
-  await pool.end();
+  await Promise.allSettled([pool.end(), unpooledPool && unpooledPool.end()]);
 }
 
 migrate().catch((err) => {
