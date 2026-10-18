@@ -135,10 +135,10 @@ export default function DocumentVerificationPage() {
               type="file"
               onChange={handleFileChange}
               required
-              accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+              accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.txt"
               className="file-input-clean"
             />
-            <span className="form-hint">Supports PDF, PNG, JPEG, DOC, DOCX up to 10MB.</span>
+            <span className="form-hint">Supports PDF, PNG, JPEG, DOC, DOCX, TXT up to 10MB.</span>
           </div>
 
           {clientHash && (

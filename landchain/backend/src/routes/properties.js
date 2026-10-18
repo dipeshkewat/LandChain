@@ -18,7 +18,7 @@ const upload = multer({
   limits: { fileSize: MAX_UPLOAD_MB * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     const allowed = ["application/pdf", "image/png", "image/jpeg", "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain"];
     if (allowed.includes(file.mimetype)) {
       cb(null, true);
     } else {

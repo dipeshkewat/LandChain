@@ -158,11 +158,11 @@ export default function RegisterPropertyPage() {
             id="document-file"
             type="file"
             onChange={handleFileChange}
-            accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+            accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.txt"
             required
             className="file-input-clean"
           />
-          <span className="form-hint">Accepted formats: PDF, PNG, JPEG, DOC, DOCX up to 10MB.</span>
+          <span className="form-hint">Accepted formats: PDF, PNG, JPEG, DOC, DOCX, TXT up to 10MB.</span>
 
           {fileHash && (
             <div className="hash-preview-clean mt-3">
