@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getProperty, getPropertyHistory, getUser } from "../services/api";
+import { getProperty, getPropertyHistory, getUser, confirmProperty } from "../services/api";
 import StatusBadge from "../components/StatusBadge";
 import AddressCopy from "../components/AddressCopy";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -11,7 +11,9 @@ export default function PropertyDetailPage() {
   const [property, setProperty] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState(null);
+  const [confirmMsg, setConfirmMsg] = useState(null);
   const user = getUser();
 
   useEffect(() => {
@@ -35,6 +37,23 @@ export default function PropertyDetailPage() {
     }
   }
 
+  const handleConfirmOnChain = async () => {
+    setConfirming(true);
+    setError(null);
+    setConfirmMsg(null);
+    try {
+      const res = await confirmProperty(property.id);
+      setConfirmMsg(res.message);
+      // Reload property data to reflect confirmed status and new tx hash
+      const updated = await getProperty(id);
+      setProperty(updated.property);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setConfirming(false);
+    }
+  };
+
   if (loading) return <LoadingSpinner message="Loading property details..." />;
   if (error) return <div className="page-container"><ErrorDisplay error={error} onRetry={loadData} /></div>;
   if (!property) return null;
@@ -43,6 +62,8 @@ export default function PropertyDetailPage() {
     user &&
     (user.wallet_address?.toLowerCase() === property.current_owner_address?.toLowerCase() ||
       user.role === "admin");
+  const isAdmin = user?.role === "admin";
+  const isPending = property.chain_status === "pending";
 
   return (
     <div className="page-container">
@@ -55,16 +76,45 @@ export default function PropertyDetailPage() {
           <p className="page-subtitle">{property.location}</p>
         </div>
         <div className="header-actions">
+          {isPending && (isAdmin || isOwner) && (
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={handleConfirmOnChain}
+              disabled={confirming}
+            >
+              {confirming ? "Confirming on Blockchain..." : "⚡ Confirm on Blockchain"}
+            </button>
+          )}
           <Link to={`/verify?code=${property.property_code}`} className="btn btn-outline btn-sm">
             Verify Document
           </Link>
-          {isOwner && (
+          {isOwner && !isPending && (
             <Link to={`/transfer?propertyId=${property.id}`} className="btn btn-primary btn-sm">
               Transfer Ownership
             </Link>
           )}
         </div>
       </div>
+
+      {confirmMsg && (
+        <div className="success-banner mb-4" role="status">
+          <div className="success-icon">✓</div>
+          <div>
+            <strong>Status Updated!</strong> {confirmMsg}
+          </div>
+        </div>
+      )}
+
+      {isPending && (
+        <div className="clean-warning-banner mb-4">
+          <div className="warning-badge">STATUS: PENDING</div>
+          <p>
+            This land parcel registration is currently <strong>Pending On-Chain Confirmation</strong>.
+            Click <strong>"⚡ Confirm on Blockchain"</strong> above to approve and permanently seal this title onto the ledger.
+          </p>
+        </div>
+      )}
 
       <div className="two-column-grid">
         {/* Main Details Card */}

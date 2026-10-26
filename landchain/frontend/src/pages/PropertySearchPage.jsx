@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { getProperties } from "../services/api";
+import { getProperties, confirmProperty, getUser } from "../services/api";
 import StatusBadge from "../components/StatusBadge";
 import AddressCopy from "../components/AddressCopy";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -14,6 +14,8 @@ export default function PropertySearchPage() {
   const [pagination, setPagination] = useState({ total: 0, limit: 10, totalPages: 1 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const user = getUser();
+  const isAdmin = user?.role === "admin";
 
   useEffect(() => {
     fetchProperties();
@@ -36,6 +38,15 @@ export default function PropertySearchPage() {
       setLoading(false);
     }
   }
+
+  const handleQuickConfirm = async (id) => {
+    try {
+      await confirmProperty(id);
+      fetchProperties();
+    } catch (err) {
+      setError(err);
+    }
+  };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -149,9 +160,21 @@ export default function PropertySearchPage() {
                       <StatusBadge status={prop.chain_status} />
                     </td>
                     <td>
-                      <Link to={`/properties/${prop.id}`} className="btn btn-outline btn-xs">
-                        Details
-                      </Link>
+                      <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                        <Link to={`/properties/${prop.id}`} className="btn btn-outline btn-xs">
+                          Details
+                        </Link>
+                        {isAdmin && prop.chain_status === "pending" && (
+                          <button
+                            type="button"
+                            className="btn btn-primary btn-xs"
+                            onClick={() => handleQuickConfirm(prop.id)}
+                            title="Approve & Confirm on Blockchain"
+                          >
+                            ⚡ Confirm
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

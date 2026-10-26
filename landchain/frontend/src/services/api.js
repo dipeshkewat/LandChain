@@ -154,6 +154,12 @@ export async function transferProperty(propertyId, toAddress) {
   });
 }
 
+export async function confirmProperty(propertyId) {
+  return request(`/properties/${propertyId}/confirm`, {
+    method: "POST",
+  });
+}
+
 // ── Transactions API ────────────────────────────────────────────────
 export async function getTransactions(params = {}) {
   const qs = new URLSearchParams(params).toString();
