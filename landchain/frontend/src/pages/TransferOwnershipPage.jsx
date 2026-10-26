@@ -121,6 +121,12 @@ export default function TransferOwnershipPage() {
     );
   }
 
+  const selectableProperties = user?.role === "admin"
+    ? properties
+    : properties.filter((p) => p.current_owner_address?.toLowerCase() === user?.wallet_address?.toLowerCase());
+
+  const isSelectedPending = selectedProperty?.chain_status === "pending";
+
   return (
     <div className="page-container">
       <div className="page-header">
@@ -159,13 +165,22 @@ export default function TransferOwnershipPage() {
                 required
                 className="form-select"
               >
-                <option value="">-- Choose a property to transfer --</option>
-                {properties.map((p) => (
+                <option value="">
+                  {selectableProperties.length === 0
+                    ? "-- No owned properties found for your wallet --"
+                    : "-- Choose a property to transfer --"}
+                </option>
+                {selectableProperties.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.property_code} — {p.location} ({p.current_owner_address ? p.current_owner_address.slice(0, 8) + '...' : 'Unassigned'})
+                    {p.property_code} — {p.location} {p.chain_status === "pending" ? "[PENDING REVIEW]" : `(${p.current_owner_address ? p.current_owner_address.slice(0, 8) + '...' : 'Unassigned'})`}
                   </option>
                 ))}
               </select>
+            )}
+            {user?.role !== "admin" && (
+              <span className="text-xs text-muted mt-1 block">
+                Showing parcels owned by your connected wallet address.
+              </span>
             )}
           </div>
 
@@ -173,7 +188,9 @@ export default function TransferOwnershipPage() {
             <div className="summary-pill-box">
               <div className="flex-between mb-2">
                 <h4>Parcel Summary</h4>
-                <span className="badge-confirmed">{selectedProperty.chain_status}</span>
+                <span className={`badge-${selectedProperty.chain_status === "confirmed" ? "confirmed" : "pending"}`}>
+                  {selectedProperty.chain_status}
+                </span>
               </div>
               <div className="clean-info-list text-sm">
                 <div className="info-row">
@@ -192,22 +209,30 @@ export default function TransferOwnershipPage() {
                 </div>
               </div>
 
+              {isSelectedPending && (
+                <div className="clean-warning-box text-xs mt-3">
+                  ⚠️ <strong>Conveyance Blocked:</strong> This property is currently <strong>PENDING</strong> registrar verification. Only confirmed blockchain parcels can be transferred.
+                </div>
+              )}
+
               {/* Authority Status Notification */}
-              <div className="mt-3">
-                {isCurrentOwner ? (
-                  <div className="clean-success-box text-xs">
-                    ✓ Verified: You are logged in with the title owner wallet address.
-                  </div>
-                ) : isAuthority ? (
-                  <div className="clean-info-box text-xs">
-                    ⚡ Authorized: Operating with Land Registry Authority clearance to record legal conveyance.
-                  </div>
-                ) : (
-                  <div className="clean-warning-box text-xs">
-                    Notice: Your logged-in account does not match this parcel's owner. Please ensure administrative or deed power-of-attorney authorization.
-                  </div>
-                )}
-              </div>
+              {!isSelectedPending && (
+                <div className="mt-3">
+                  {isCurrentOwner ? (
+                    <div className="clean-success-box text-xs">
+                      ✓ Verified: You are logged in with the title owner wallet address.
+                    </div>
+                  ) : isAuthority ? (
+                    <div className="clean-info-box text-xs">
+                      ⚡ Authorized: Operating with Land Registry Authority clearance to record legal conveyance.
+                    </div>
+                  ) : (
+                    <div className="clean-warning-box text-xs">
+                      Notice: Your logged-in account does not match this parcel's owner. Please ensure administrative or deed power-of-attorney authorization.
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -221,6 +246,7 @@ export default function TransferOwnershipPage() {
               onChange={(e) => setRecipientAddress(e.target.value)}
               required
               className="form-input"
+              disabled={isSelectedPending}
             />
             <div className="quick-input-tags mt-1">
               <button
@@ -250,9 +276,9 @@ export default function TransferOwnershipPage() {
           <button
             type="submit"
             className="btn btn-primary btn-full btn-lg mt-4"
-            disabled={loading || !selectedPropertyId || !recipientAddress}
+            disabled={loading || !selectedPropertyId || !recipientAddress || isSelectedPending}
           >
-            {loading ? "Recording Transfer on Blockchain..." : "Execute Title Conveyance"}
+            {loading ? "Recording Transfer on Blockchain..." : isSelectedPending ? "Cannot Transfer (Pending Approval)" : "Execute Title Conveyance"}
           </button>
         </form>
 

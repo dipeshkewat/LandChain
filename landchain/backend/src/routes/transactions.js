@@ -13,14 +13,48 @@ router.get("/", async (req, res, next) => {
     const limit = parseInt(req.query.limit || "20", 10);
     const offset = (page - 1) * limit;
 
-    const countResult = await query("SELECT COUNT(*) FROM ownership_transfers");
-    const total = parseInt(countResult.rows[0].count, 10);
+    const countResult = await query(
+      `SELECT (
+         (SELECT COUNT(*) FROM ownership_transfers) +
+         (SELECT COUNT(*) FROM properties WHERE registration_tx_hash IS NOT NULL AND chain_status = 'confirmed')
+       ) AS total`
+    );
+    const total = parseInt(countResult.rows[0].total, 10);
 
     const result = await query(
-      `SELECT ot.*, p.property_code, p.location
+      `SELECT 
+         'transfer' AS tx_type,
+         ot.id,
+         ot.property_id,
+         p.property_code,
+         p.location,
+         ot.from_address,
+         ot.to_address,
+         ot.transaction_hash,
+         ot.block_number,
+         ot.status,
+         ot.created_at
        FROM ownership_transfers ot
        LEFT JOIN properties p ON ot.property_id = p.id
-       ORDER BY ot.created_at DESC
+
+       UNION ALL
+
+       SELECT 
+         'registration' AS tx_type,
+         p.id,
+         p.id AS property_id,
+         p.property_code,
+         p.location,
+         '0x0000000000000000000000000000000000000000' AS from_address,
+         p.current_owner_address AS to_address,
+         p.registration_tx_hash AS transaction_hash,
+         100 AS block_number,
+         p.chain_status AS status,
+         p.created_at
+       FROM properties p
+       WHERE p.registration_tx_hash IS NOT NULL AND p.chain_status = 'confirmed'
+
+       ORDER BY created_at DESC
        LIMIT $1 OFFSET $2`,
       [limit, offset]
     );

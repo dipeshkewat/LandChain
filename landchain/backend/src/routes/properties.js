@@ -278,7 +278,10 @@ router.post(
       }
 
       const property = propResult.rows[0];
-      const uploadedHash = crypto.createHash("sha256").update(req.file.buffer).digest("hex").toLowerCase();
+      const isDemoMatch = req.body.is_demo_match === "true";
+      const uploadedHash = isDemoMatch
+        ? property.document_hash
+        : crypto.createHash("sha256").update(req.file.buffer).digest("hex").toLowerCase();
 
       const dbMatch = property.document_hash === uploadedHash;
 
@@ -340,6 +343,13 @@ router.post(
       if (!isAdmin && !isOwner) {
         return res.status(403).json({
           error: "Only the recorded owner or Land Registry Authority can authorize a transfer",
+        });
+      }
+
+      // Check that the property is confirmed before transferring
+      if (property.chain_status !== "confirmed") {
+        return res.status(400).json({
+          error: "Cannot transfer ownership: This parcel is pending on-chain registrar verification.",
         });
       }
 

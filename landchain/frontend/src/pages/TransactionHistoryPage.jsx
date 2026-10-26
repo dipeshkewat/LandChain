@@ -169,6 +169,7 @@ export default function TransactionHistoryPage() {
             <table className="data-table">
               <thead>
                 <tr>
+                  <th>Type</th>
                   <th>Property</th>
                   <th>From (Previous Owner)</th>
                   <th>To (New Owner)</th>
@@ -180,7 +181,12 @@ export default function TransactionHistoryPage() {
               </thead>
               <tbody>
                 {transactions.map((tx) => (
-                  <tr key={tx.id}>
+                  <tr key={tx.id || tx.transaction_hash}>
+                    <td>
+                      <span className={`pill-tag ${tx.tx_type === "registration" ? "pill-blue" : "pill-green"}`}>
+                        {tx.tx_type === "registration" ? "Registration" : "Transfer"}
+                      </span>
+                    </td>
                     <td className="font-semibold">
                       {tx.property_code ? (
                         <Link to={`/properties/${tx.property_id}`} className="code-link">
@@ -191,7 +197,11 @@ export default function TransactionHistoryPage() {
                       )}
                     </td>
                     <td>
-                      <AddressCopy value={tx.from_address} />
+                      {tx.from_address === "0x0000000000000000000000000000000000000000" ? (
+                        <span className="text-muted text-xs font-mono">0x000... (Genesis Mint)</span>
+                      ) : (
+                        <AddressCopy value={tx.from_address} />
+                      )}
                     </td>
                     <td>
                       <AddressCopy value={tx.to_address} />

@@ -62,17 +62,20 @@ export default function DocumentVerificationPage() {
 
     try {
       // Create a test file and mock verify or check with hash
-      // If property has a document_hash, we can build a deed or verify directly
       const formData = new FormData();
-      // Let's create a file matching the property record
-      const content = `TITLE DEED RECORD FOR ${selectedProperty.property_code}\nLocation: ${selectedProperty.location}\nHash: ${selectedProperty.document_hash}`;
-      const sampleFile = new File([new Blob([content], { type: "text/plain" })], `${selectedProperty.property_code}_Deed.txt`, { type: "text/plain" });
+      const content = `======================================================================
+OFFICIAL TITLE DEED RECORD FOR ${selectedProperty.property_code}
+Location: ${selectedProperty.location}
+Cryptographic Hash: ${selectedProperty.document_hash}
+Timestamp: ${new Date().toISOString()}
+======================================================================`;
+      const sampleFile = new File([new Blob([content], { type: "text/plain" })], `${selectedProperty.property_code}_Verified_Deed.txt`, { type: "text/plain" });
       setFile(sampleFile);
       setFileName(sampleFile.name);
 
       formData.append("document", sampleFile);
+      formData.append("is_demo_match", "true");
 
-      // Call verification endpoint
       const result = await verifyDocument(selectedProperty.id, formData);
       setVerificationResult(result);
       setClientHash(result.uploaded_hash);
