@@ -104,8 +104,11 @@ Any byte modification invalidates the SHA-256 integrity digest.
       }
 
       const result = await createProperty(formData);
+      const isPending = result.property.chain_status === "pending";
       setSuccess({
-        message: `Property ${result.property.property_code} registered and recorded on-chain!`,
+        message: isPending
+          ? `Application for parcel ${result.property.property_code} submitted! Status is PENDING registrar review.`
+          : `Property ${result.property.property_code} registered and confirmed on-chain!`,
         propertyId: result.property.id,
       });
 

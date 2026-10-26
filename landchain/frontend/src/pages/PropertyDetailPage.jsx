@@ -76,7 +76,7 @@ export default function PropertyDetailPage() {
           <p className="page-subtitle">{property.location}</p>
         </div>
         <div className="header-actions">
-          {isPending && (isAdmin || isOwner) && (
+          {isPending && isAdmin && (
             <button
               type="button"
               className="btn btn-primary btn-sm"
@@ -108,11 +108,18 @@ export default function PropertyDetailPage() {
 
       {isPending && (
         <div className="clean-warning-banner mb-4">
-          <div className="warning-badge">STATUS: PENDING</div>
-          <p>
-            This land parcel registration is currently <strong>Pending On-Chain Confirmation</strong>.
-            Click <strong>"⚡ Confirm on Blockchain"</strong> above to approve and permanently seal this title onto the ledger.
-          </p>
+          <div className="warning-badge">STATUS: PENDING VERIFICATION</div>
+          {isAdmin ? (
+            <p>
+              This land parcel application is currently <strong>Pending On-Chain Confirmation</strong>.
+              As the Cadastral Authority, review the survey details and click <strong>"⚡ Confirm on Blockchain"</strong> above to mint this title onto the ledger.
+            </p>
+          ) : (
+            <p>
+              Your land parcel application is currently <strong>Pending Cadastral Registrar Verification</strong>.
+              The Land Registry Authority will review your deed document and boundary survey before officially approving and minting it onto the blockchain ledger.
+            </p>
+          )}
         </div>
       )}
 

@@ -144,13 +144,15 @@ router.post(
           .toLowerCase();
       }
 
-      const registrationTxHash = "0x" + crypto.randomBytes(32).toString("hex");
+      const isAdmin = req.user?.role === "admin";
+      const initialStatus = isAdmin ? "confirmed" : "pending";
+      const registrationTxHash = isAdmin ? ("0x" + crypto.randomBytes(32).toString("hex")) : null;
 
       const result = await query(
         `INSERT INTO properties
            (property_code, location, area_sq_m, description, document_hash,
             current_owner_address, blockchain_property_id, created_by, chain_status, registration_tx_hash)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'confirmed', $9)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
          RETURNING *`,
         [
           property_code,
@@ -161,6 +163,7 @@ router.post(
           finalOwner,
           finalBlockchainId,
           userId,
+          initialStatus,
           registrationTxHash,
         ]
       );
@@ -169,10 +172,10 @@ router.post(
 
       logAudit({
         userId,
-        action: "PROPERTY_REGISTERED",
+        action: initialStatus === "confirmed" ? "PROPERTY_REGISTERED_CONFIRMED" : "PROPERTY_REGISTRATION_SUBMITTED",
         entityType: "property",
         entityId: property.id,
-        details: { property_code, owner_address: finalOwner, document_hash: documentHash, tx_hash: registrationTxHash },
+        details: { property_code, owner_address: finalOwner, document_hash: documentHash, status: initialStatus },
       });
 
       res.status(201).json({ property });
