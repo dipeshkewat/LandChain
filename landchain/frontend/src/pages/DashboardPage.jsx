@@ -20,12 +20,16 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
     try {
-      const propsData = await getProperties({ limit: 6 });
-      setRecentProperties(propsData.properties || []);
+      const [propsData, statsData] = await Promise.allSettled([
+        getProperties({ limit: 6 }),
+        getAdminStats(),
+      ]);
 
-      if (user?.role === "admin") {
-        const statsData = await getAdminStats();
-        setStats(statsData.stats);
+      if (propsData.status === "fulfilled") {
+        setRecentProperties(propsData.value.properties || []);
+      }
+      if (statsData.status === "fulfilled" && statsData.value?.stats) {
+        setStats(statsData.value.stats);
       }
     } catch (err) {
       setError(err);
@@ -42,82 +46,111 @@ export default function DashboardPage() {
         <div>
           <h1>Registry Dashboard</h1>
           <p className="page-subtitle">
-            Welcome back{user ? `, ${user.name}` : ""}. Real-time blockchain land ledger overview.
+            Welcome{user ? `, ${user.name}` : ""}. Real-time blockchain title ledger and cadastre overview.
           </p>
         </div>
         <div className="header-actions">
-          <Link to="/properties" className="btn btn-outline btn-sm">
-            View All Properties
+          <Link to="/register" className="btn btn-primary btn-sm">
+            + Register Land
           </Link>
-          {user?.role === "admin" && (
-            <Link to="/register" className="btn btn-primary btn-sm">
-              Register Property
-            </Link>
-          )}
+          <Link to="/verify" className="btn btn-outline btn-sm">
+            🔍 Verify Deed
+          </Link>
         </div>
       </div>
 
       <ErrorDisplay error={error} onRetry={loadDashboard} />
 
+      {/* Hero Action Cards */}
+      <div className="dashboard-hero-grid mb-6">
+        <Link to="/register" className="dashboard-action-card card-register">
+          <div className="action-card-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+          </div>
+          <div className="action-card-content">
+            <h4>Register Land Parcel</h4>
+            <p>Mint new parcel metadata, attach title deed, and compute cryptographic digest.</p>
+            <span className="card-cta-link">Start Registration →</span>
+          </div>
+        </Link>
+
+        <Link to="/verify" className="dashboard-action-card card-verify">
+          <div className="action-card-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              <polyline points="9 12 11 14 15 10"></polyline>
+            </svg>
+          </div>
+          <div className="action-card-content">
+            <h4>Verify Title Deed</h4>
+            <p>Upload any deed file to check raw byte integrity against the blockchain record.</p>
+            <span className="card-cta-link">Verify Document →</span>
+          </div>
+        </Link>
+
+        <Link to="/transfer" className="dashboard-action-card card-transfer">
+          <div className="action-card-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="17 1 21 5 17 9"></polyline>
+              <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+              <polyline points="7 23 3 19 7 15"></polyline>
+              <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+            </svg>
+          </div>
+          <div className="action-card-content">
+            <h4>Transfer Ownership</h4>
+            <p>Execute authorized title conveyance to a new owner wallet address.</p>
+            <span className="card-cta-link">Transfer Title →</span>
+          </div>
+        </Link>
+      </div>
+
       {/* Summary Cards */}
       {stats && (
-        <div className="stats-grid">
-          <div className="stat-card">
+        <div className="stats-grid mb-6">
+          <div className="stat-card stat-accent-blue">
             <span className="stat-label">TOTAL PROPERTIES</span>
             <span className="stat-value">{stats.total_properties}</span>
             <span className="stat-subtext">Recorded parcels on-chain</span>
           </div>
-          <div className="stat-card">
+          <div className="stat-card stat-accent-purple">
             <span className="stat-label">REGISTERED USERS</span>
             <span className="stat-value">{stats.total_users}</span>
-            <span className="stat-subtext">Authorized accounts</span>
+            <span className="stat-subtext">Authorized accounts & owners</span>
           </div>
-          <div className="stat-card">
-            <span className="stat-label">TRANSFERS</span>
+          <div className="stat-card stat-accent-emerald">
+            <span className="stat-label">TRANSFERS COMPLETED</span>
             <span className="stat-value">{stats.total_transfers}</span>
-            <span className="stat-subtext">Ownership transfers</span>
+            <span className="stat-subtext">Immutable ownership deeds</span>
           </div>
-          <div className="stat-card">
-            <span className="stat-label">PENDING RECONCILIATION</span>
-            <span className="stat-value">{stats.pending_registrations}</span>
-            <span className="stat-subtext">Awaiting confirmation</span>
+          <div className="stat-card stat-accent-amber">
+            <span className="stat-label">STATUS CONFIRMED</span>
+            <span className="stat-value">
+              {stats.status_breakdown?.find((s) => s.chain_status === "confirmed")?.count || stats.total_properties}
+            </span>
+            <span className="stat-subtext">Cryptographically verified</span>
           </div>
         </div>
       )}
 
-      {/* Quick Navigation Pills */}
-      <div className="filter-pill-row">
-        <Link to="/properties" className="pill-item active">
-          All Properties
-        </Link>
-        <Link to="/verify" className="pill-item">
-          Verify Document
-        </Link>
-        <Link to="/history" className="pill-item">
-          Transfer History
-        </Link>
-        {user?.role === "admin" && (
-          <Link to="/admin" className="pill-item">
-            Admin Activity
-          </Link>
-        )}
-      </div>
-
-      {/* Recent Properties Table / Grid */}
+      {/* Recent Properties Table */}
       <div className="content-card">
         <div className="content-card-header flex-between">
           <div>
             <h3>Recent Land Records</h3>
-            <p className="card-subtitle">Latest verified property entries</p>
+            <p className="card-subtitle">Latest verified property entries on the decentralized ledger</p>
           </div>
-          <Link to="/properties" className="btn-link">
-            Explore All ({recentProperties.length})
+          <Link to="/properties" className="btn-link font-semibold">
+            Explore All Parcels ({recentProperties.length}) →
           </Link>
         </div>
 
         {recentProperties.length === 0 ? (
           <div className="empty-state">
-            <p>No properties recorded yet.</p>
+            <p>No properties recorded yet. Click "Register Land" above to add the first parcel!</p>
           </div>
         ) : (
           <div className="table-responsive">
@@ -157,7 +190,7 @@ export default function DashboardPage() {
                         to={`/properties/${p.id}`}
                         className="btn btn-outline btn-xs"
                       >
-                        Inspect
+                        Inspect Parcel
                       </Link>
                     </td>
                   </tr>

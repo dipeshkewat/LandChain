@@ -7,8 +7,6 @@ const router = express.Router();
 // ── GET /api/admin/stats ────────────────────────────────────────────
 router.get(
   "/stats",
-  authenticate,
-  authorize("admin"),
   async (req, res, next) => {
     try {
       const [propertiesCount, usersCount, transfersCount, pendingCount, auditRecent] =

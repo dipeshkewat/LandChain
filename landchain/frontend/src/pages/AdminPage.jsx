@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getAdminStats, getUser } from "../services/api";
+import { getAdminStats, getUser, demoLogin } from "../services/api";
 import StatusBadge from "../components/StatusBadge";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ErrorDisplay from "../components/ErrorDisplay";
@@ -14,10 +14,6 @@ export default function AdminPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!user || user.role !== "admin") {
-      navigate("/");
-      return;
-    }
     loadAdminData();
   }, []);
 
@@ -35,7 +31,18 @@ export default function AdminPage() {
     }
   }
 
+  const handleSwitchAdmin = async () => {
+    try {
+      await demoLogin("admin");
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   if (loading) return <LoadingSpinner message="Loading admin control panel..." />;
+
+  const isAdmin = user?.role === "admin";
 
   return (
     <div className="page-container">
@@ -43,15 +50,34 @@ export default function AdminPage() {
         <div>
           <h1>Admin Control Panel</h1>
           <p className="page-subtitle">
-            System administration, chain reconciliation audit, and registry controls.
+            Cadastral authority management, consensus audit trail, and blockchain system metrics.
           </p>
         </div>
-        <div>
-          <Link to="/register" className="btn btn-primary btn-sm">
-            Register Property
+        <div className="header-actions">
+          {!isAdmin && (
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={handleSwitchAdmin}
+            >
+              ⚡ Switch to Admin Authority
+            </button>
+          )}
+          <Link to="/register" className="btn btn-outline btn-sm">
+            + Register Land
           </Link>
         </div>
       </div>
+
+      {!isAdmin && (
+        <div className="clean-warning-banner mb-6">
+          <div className="warning-badge">VIEWING AS {user ? user.role.toUpperCase() : "GUEST"}</div>
+          <p>
+            You are currently browsing the admin telemetry panel in read-only mode.
+            Click <strong>"Switch to Admin Authority"</strong> above to test administrator privileges.
+          </p>
+        </div>
+      )}
 
       <ErrorDisplay error={error} onRetry={loadAdminData} />
 

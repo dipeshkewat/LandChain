@@ -56,4 +56,17 @@ function generateToken(user) {
   );
 }
 
-module.exports = { authenticate, authorize, generateToken };
+function optionalAuthenticate(req, res, next) {
+  const header = req.headers.authorization;
+  if (header && header.startsWith("Bearer ")) {
+    const token = header.slice(7);
+    try {
+      req.user = jwt.verify(token, JWT_SECRET);
+    } catch (_err) {
+      // ignore invalid token for optional auth
+    }
+  }
+  next();
+}
+
+module.exports = { authenticate, optionalAuthenticate, authorize, generateToken };

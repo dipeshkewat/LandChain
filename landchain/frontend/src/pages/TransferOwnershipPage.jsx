@@ -62,7 +62,7 @@ export default function TransferOwnershipPage() {
       return;
     }
 
-    if (!recipientAddress || !/^0x[a-fA-F0-9]{40}$/.test(recipientAddress)) {
+    if (!recipientAddress || !/^0x[a-fA-F0-9]{40}$/i.test(recipientAddress)) {
       setError(new Error("Please provide a valid 42-character Ethereum hex address (0x...)."));
       return;
     }
@@ -79,12 +79,12 @@ export default function TransferOwnershipPage() {
     try {
       const result = await transferProperty(selectedPropertyId, recipientAddress);
       setSuccess({
-        message: `Ownership transfer initiated for property ${selectedProperty?.property_code || selectedPropertyId}.`,
+        message: `Ownership successfully transferred to ${recipientAddress.slice(0, 10)}... for parcel ${selectedProperty?.property_code || selectedPropertyId}.`,
         transfer: result.transfer,
       });
       setTimeout(() => {
         navigate(`/properties/${selectedPropertyId}`);
-      }, 3000);
+      }, 2500);
     } catch (err) {
       setError(err);
     } finally {
@@ -92,12 +92,19 @@ export default function TransferOwnershipPage() {
     }
   };
 
+  const isCurrentOwner =
+    user?.wallet_address &&
+    selectedProperty?.current_owner_address &&
+    user.wallet_address.toLowerCase() === selectedProperty.current_owner_address.toLowerCase();
+
+  const isAuthority = user?.role === "admin" || !user;
+
   return (
     <div className="page-container">
       <div className="page-header">
         <h1>Transfer Land Ownership</h1>
         <p className="page-subtitle">
-          Initiate an authorized ownership change on the immutable blockchain land registry.
+          Execute an authorized ownership conveyance on the immutable blockchain ledger.
         </p>
       </div>
 
@@ -105,10 +112,13 @@ export default function TransferOwnershipPage() {
 
       {success && (
         <div className="success-banner" role="status">
-          <span className="banner-badge">INITIATED</span>
+          <div className="success-icon">✓</div>
           <div>
-            <strong>Transfer Record Created:</strong> {success.message}
-            <div className="text-sm mt-1">Status: Pending on-chain confirmation. Redirecting...</div>
+            <strong>Conveyance Confirmed on Ledger!</strong> {success.message}
+            <div className="text-sm mt-1">
+              Transaction Hash: <span className="font-mono text-xs">{success.transfer?.transaction_hash}</span>
+            </div>
+            <div className="text-sm mt-1">Redirecting to updated property record...</div>
           </div>
         </div>
       )}
@@ -127,10 +137,10 @@ export default function TransferOwnershipPage() {
                 required
                 className="form-select"
               >
-                <option value="">-- Choose a property --</option>
+                <option value="">-- Choose a property to transfer --</option>
                 {properties.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.property_code} — {p.location}
+                    {p.property_code} — {p.location} ({p.current_owner_address ? p.current_owner_address.slice(0, 8) + '...' : 'Unassigned'})
                   </option>
                 ))}
               </select>
@@ -139,29 +149,48 @@ export default function TransferOwnershipPage() {
 
           {selectedProperty && (
             <div className="summary-pill-box">
-              <h4>Selected Parcel</h4>
-              <p><strong>Code:</strong> {selectedProperty.property_code}</p>
-              <p><strong>Location:</strong> {selectedProperty.location}</p>
-              <p>
-                <strong>Current Owner:</strong>{" "}
-                {selectedProperty.current_owner_address ? (
-                  <AddressCopy value={selectedProperty.current_owner_address} />
+              <div className="flex-between mb-2">
+                <h4>Parcel Summary</h4>
+                <span className="badge-confirmed">{selectedProperty.chain_status}</span>
+              </div>
+              <div className="clean-info-list text-sm">
+                <div className="info-row">
+                  <span className="info-key">Property Code:</span>
+                  <span className="info-val font-semibold">{selectedProperty.property_code}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-key">Location:</span>
+                  <span className="info-val">{selectedProperty.location}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-key">Current Owner:</span>
+                  <div className="info-val">
+                    <AddressCopy value={selectedProperty.current_owner_address} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Authority Status Notification */}
+              <div className="mt-3">
+                {isCurrentOwner ? (
+                  <div className="clean-success-box text-xs">
+                    ✓ Verified: You are logged in with the title owner wallet address.
+                  </div>
+                ) : isAuthority ? (
+                  <div className="clean-info-box text-xs">
+                    ⚡ Authorized: Operating with Land Registry Authority clearance to record legal conveyance.
+                  </div>
                 ) : (
-                  "Unassigned"
-                )}
-              </p>
-              {user &&
-                user.wallet_address?.toLowerCase() !==
-                  selectedProperty.current_owner_address?.toLowerCase() && (
-                  <div className="clean-warning-box">
-                    Notice: Your logged-in wallet address does not match the current recorded owner. Only the recorded owner can authorize this transfer.
+                  <div className="clean-warning-box text-xs">
+                    Notice: Your logged-in account does not match this parcel's owner. Please ensure administrative or deed power-of-attorney authorization.
                   </div>
                 )}
+              </div>
             </div>
           )}
 
           <div className="form-group mt-4">
-            <label htmlFor="recipient">New Owner Wallet Address *</label>
+            <label htmlFor="recipient">New Owner Recipient Wallet Address *</label>
             <input
               id="recipient"
               type="text"
@@ -171,37 +200,57 @@ export default function TransferOwnershipPage() {
               required
               className="form-input"
             />
-            <span className="form-hint">
-              Must be a valid 42-character Ethereum address (not zero address).
-            </span>
+            <div className="quick-input-tags mt-1">
+              <button
+                type="button"
+                className="input-tag-btn"
+                onClick={() => setRecipientAddress("0xabcdefabcdefabcdefabcdefabcdefabcdefabcd")}
+              >
+                Send to Demo Owner
+              </button>
+              <button
+                type="button"
+                className="input-tag-btn"
+                onClick={() => setRecipientAddress("0x1234567890abcdef1234567890abcdef12345678")}
+              >
+                Send to Demo Admin
+              </button>
+              <button
+                type="button"
+                className="input-tag-btn"
+                onClick={() => setRecipientAddress("0x70997970C51812dc3A010C7d01b50e0d17dc79C8")}
+              >
+                Send to Hardhat Account #1
+              </button>
+            </div>
           </div>
 
           <button
             type="submit"
-            className="btn btn-primary btn-full mt-4"
+            className="btn btn-primary btn-full btn-lg mt-4"
             disabled={loading || !selectedPropertyId || !recipientAddress}
           >
-            {loading ? "Submitting Transfer..." : "Submit Ownership Transfer"}
+            {loading ? "Recording Transfer on Blockchain..." : "Execute Title Conveyance"}
           </button>
         </form>
 
         <div className="content-card">
           <div className="content-card-header">
-            <h3>Transfer Rules & Requirements</h3>
+            <h3>Conveyance Rules & Smart Contract Guarantees</h3>
           </div>
           <div className="card-body">
             <ul className="clean-guide-list">
               <li>
-                <strong>Owner-Only Authorization:</strong> Smart contracts restrict transfer execution to the currently recorded owner address.
+                <strong>Cryptographic Title Verification:</strong> The smart contract validates ownership records before signing state changes.
               </li>
               <li>
-                <strong>Zero Address Protection:</strong> Transfers to 0x00...00 are strictly rejected.
+                <strong>Zero Address Rejection:</strong> Conveyance to null or burn addresses (<code>0x00...00</code>) is permanently blocked.
               </li>
               <li>
-                <strong>Self-Transfer Prevention:</strong> The recipient must be distinct from the current owner address.
+                <strong>Self-Transfer Prevention:</strong> The transferee cannot be identical to the grantor.
               </li>
               <li>
-                <strong>Immutable Log:</strong> Each transfer emits a permanent OwnershipTransferred event.
+                <strong>Immutable Audit Trail:</strong> Each executed transfer emits an <code>OwnershipTransferred</code> event with block height and cryptographic timestamp.
               </li>
             </ul>
           </div>

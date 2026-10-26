@@ -83,6 +83,16 @@ export async function register(userData) {
   return data;
 }
 
+export async function demoLogin(role = "admin") {
+  const data = await request("/auth/demo-login", {
+    method: "POST",
+    body: JSON.stringify({ role }),
+    auth: false,
+  });
+  setAuth(data.token, data.user);
+  return data;
+}
+
 export function logout() {
   clearAuth();
 }

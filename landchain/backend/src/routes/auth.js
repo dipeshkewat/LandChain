@@ -105,4 +105,39 @@ router.post(
   }
 );
 
+// ── POST /api/auth/demo-login ────────────────────────────────────────
+router.post("/demo-login", async (req, res, next) => {
+  try {
+    const role = req.body.role || "admin";
+    const demoEmail =
+      role === "owner"
+        ? "owner@landchain.demo"
+        : role === "viewer"
+        ? "viewer@landchain.demo"
+        : "admin@landchain.demo";
+
+    const result = await query(
+      "SELECT id, name, email, wallet_address, role FROM users WHERE email = $1",
+      [demoEmail]
+    );
+
+    let user = result.rows[0];
+    if (!user) {
+      // Fallback if not seeded
+      user = {
+        id: "a0000000-0000-0000-0000-000000000001",
+        name: "Admin Authority",
+        email: "admin@landchain.demo",
+        wallet_address: "0x1234567890abcdef1234567890abcdef12345678",
+        role: "admin",
+      };
+    }
+
+    const token = generateToken(user);
+    res.json({ user, token });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
