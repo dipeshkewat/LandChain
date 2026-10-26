@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { createProperty, getUser } from "../services/api";
 import { hashFile } from "../services/blockchain";
 import ErrorDisplay from "../components/ErrorDisplay";
@@ -111,13 +111,35 @@ Any byte modification invalidates the SHA-256 integrity digest.
 
       setTimeout(() => {
         navigate(`/properties/${result.property.id}`);
-      }, 2500);
+      }, 1500);
     } catch (err) {
       setError(err);
     } finally {
       setLoading(false);
     }
   };
+
+  if (user?.role === "viewer") {
+    return (
+      <div className="page-container">
+        <div className="empty-state-box" style={{ padding: "3.5rem 2rem", textAlign: "center", background: "var(--card-bg)", borderRadius: "var(--radius-lg)", border: "1px solid var(--border-color)", margin: "2rem auto", maxWidth: "600px" }}>
+          <div style={{ fontSize: "2.8rem", marginBottom: "1rem" }}>📋</div>
+          <h2 style={{ fontSize: "1.4rem", fontWeight: "700", marginBottom: "0.5rem" }}>Registration Restricted to Property Owners</h2>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", lineHeight: "1.6", marginBottom: "1.75rem" }}>
+            As a <strong>Public Citizen / Viewer</strong>, your account is configured to explore the land registry and verify title deeds. To register new land parcels, please sign in as a <strong>Property Owner</strong> or <strong>Cadastral Administrator</strong>.
+          </p>
+          <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+            <Link to="/properties" className="btn btn-primary btn-sm">
+              Explore Property Directory
+            </Link>
+            <Link to="/verify" className="btn btn-outline btn-sm">
+              Verify Title Deed
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page-container">

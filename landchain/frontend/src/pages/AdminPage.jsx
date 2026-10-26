@@ -13,9 +13,13 @@ export default function AdminPage() {
   const user = getUser();
   const navigate = useNavigate();
 
+  const isAdmin = user?.role === "admin";
+
   useEffect(() => {
-    loadAdminData();
-  }, []);
+    if (isAdmin) {
+      loadAdminData();
+    }
+  }, [isAdmin]);
 
   async function loadAdminData() {
     setLoading(true);
@@ -31,18 +35,34 @@ export default function AdminPage() {
     }
   }
 
-  const handleSwitchAdmin = async () => {
-    try {
-      await demoLogin("admin");
-      window.location.reload();
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  if (!isAdmin) {
+    return (
+      <div className="page-container">
+        <div className="empty-state-box" style={{ padding: "3.5rem 2rem", textAlign: "center", background: "var(--card-bg)", borderRadius: "var(--radius-lg)", border: "1px solid var(--border-color)", margin: "2rem auto", maxWidth: "600px" }}>
+          <div style={{ fontSize: "2.8rem", marginBottom: "1rem" }}>🔒</div>
+          <h2 style={{ fontSize: "1.4rem", fontWeight: "700", marginBottom: "0.5rem" }}>Administrator Privileges Required</h2>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", lineHeight: "1.6", marginBottom: "1.75rem" }}>
+            The Cadastral Authority Control Panel is restricted to authorized Land Registry Officers.
+            {user ? (
+              <> You are currently logged in as <strong>{user.name}</strong> (<span className={`user-role-badge role-${user.role}`}>{user.role}</span>).</>
+            ) : (
+              " Please sign in with an administrative account to access system telemetry."
+            )}
+          </p>
+          <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+            <Link to="/" className="btn btn-primary btn-sm">
+              Return to Dashboard
+            </Link>
+            <Link to="/properties" className="btn btn-outline btn-sm">
+              Property Directory
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) return <LoadingSpinner message="Loading admin control panel..." />;
-
-  const isAdmin = user?.role === "admin";
 
   return (
     <div className="page-container">
@@ -54,30 +74,11 @@ export default function AdminPage() {
           </p>
         </div>
         <div className="header-actions">
-          {!isAdmin && (
-            <button
-              type="button"
-              className="btn btn-primary btn-sm"
-              onClick={handleSwitchAdmin}
-            >
-              ⚡ Switch to Admin Authority
-            </button>
-          )}
-          <Link to="/register" className="btn btn-outline btn-sm">
+          <Link to="/register" className="btn btn-primary btn-sm">
             + Register Land
           </Link>
         </div>
       </div>
-
-      {!isAdmin && (
-        <div className="clean-warning-banner mb-6">
-          <div className="warning-badge">VIEWING AS {user ? user.role.toUpperCase() : "GUEST"}</div>
-          <p>
-            You are currently browsing the admin telemetry panel in read-only mode.
-            Click <strong>"Switch to Admin Authority"</strong> above to test administrator privileges.
-          </p>
-        </div>
-      )}
 
       <ErrorDisplay error={error} onRetry={loadAdminData} />
 

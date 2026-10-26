@@ -11,19 +11,13 @@ export default function Navbar() {
     navigate("/login");
   };
 
-  const handleQuickSwitch = async (role) => {
-    try {
-      await demoLogin(role);
-      window.location.reload();
-    } catch (err) {
-      console.error("Demo switch failed:", err);
-    }
-  };
+  const currentRole = user?.role || "viewer";
 
-  const navItems = [
+  const allNavItems = [
     {
       path: "/",
       label: "Dashboard",
+      roles: ["admin", "owner", "viewer"],
       icon: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="3" y="3" width="7" height="7"></rect>
@@ -36,6 +30,7 @@ export default function Navbar() {
     {
       path: "/properties",
       label: "Property Directory",
+      roles: ["admin", "owner", "viewer"],
       icon: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
@@ -47,6 +42,7 @@ export default function Navbar() {
       path: "/register",
       label: "Register Land",
       badge: "Action",
+      roles: ["admin", "owner"],
       icon: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -57,6 +53,7 @@ export default function Navbar() {
     {
       path: "/transfer",
       label: "Transfer Ownership",
+      roles: ["admin", "owner"],
       icon: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="17 1 21 5 17 9"></polyline>
@@ -69,6 +66,7 @@ export default function Navbar() {
     {
       path: "/verify",
       label: "Document Verification",
+      roles: ["admin", "owner", "viewer"],
       icon: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
@@ -79,6 +77,7 @@ export default function Navbar() {
     {
       path: "/history",
       label: "Transaction History",
+      roles: ["admin", "owner", "viewer"],
       icon: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
@@ -89,6 +88,7 @@ export default function Navbar() {
     {
       path: "/admin",
       label: "Admin Control Panel",
+      roles: ["admin"],
       icon: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="3"></circle>
@@ -97,6 +97,14 @@ export default function Navbar() {
       ),
     },
   ];
+
+  // Filter items based on active role
+  const visibleNavItems = allNavItems.filter((item) => {
+    if (!user) {
+      return item.roles.includes("viewer");
+    }
+    return item.roles.includes(currentRole);
+  });
 
   return (
     <aside className="sidebar-nav">
@@ -116,19 +124,16 @@ export default function Navbar() {
         </Link>
       </div>
 
-      {/* Network Status Badge */}
-      <div className="network-pill-container">
-        <div className="network-pill">
-          <span className="network-pulse"></span>
-          <span className="network-name">Ethereum Hardhat Local</span>
-          <span className="network-state">Active</span>
-        </div>
-      </div>
-
       <div className="sidebar-body">
-        <div className="nav-group-title">Registry Menu</div>
+        <div className="nav-group-title">
+          {currentRole === "admin"
+            ? "Cadastral Authority"
+            : currentRole === "owner"
+            ? "Property Owner Portal"
+            : "Public Citizen Registry"}
+        </div>
         <ul className="sidebar-menu">
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <li key={item.path} className="sidebar-menu-item">
@@ -144,37 +149,6 @@ export default function Navbar() {
             );
           })}
         </ul>
-
-        {/* Quick Demo Role Switcher */}
-        <div className="quick-roles-section">
-          <div className="nav-group-title">Switch Demo Identity</div>
-          <div className="role-switch-buttons">
-            <button
-              type="button"
-              className={`role-switch-btn ${user?.role === "admin" ? "active" : ""}`}
-              onClick={() => handleQuickSwitch("admin")}
-              title="Registrar Authority with full registration & administration rights"
-            >
-              Admin
-            </button>
-            <button
-              type="button"
-              className={`role-switch-btn ${user?.role === "owner" ? "active" : ""}`}
-              onClick={() => handleQuickSwitch("owner")}
-              title="Verified Property Owner"
-            >
-              Owner
-            </button>
-            <button
-              type="button"
-              className={`role-switch-btn ${user?.role === "viewer" ? "active" : ""}`}
-              onClick={() => handleQuickSwitch("viewer")}
-              title="Public Citizen & Property Buyer"
-            >
-              Viewer
-            </button>
-          </div>
-        </div>
       </div>
 
       <div className="sidebar-footer">
@@ -204,13 +178,12 @@ export default function Navbar() {
           </div>
         ) : (
           <div className="sidebar-auth-cta">
-            <button
-              type="button"
+            <Link
+              to="/login"
               className="btn btn-primary btn-full btn-sm"
-              onClick={() => handleQuickSwitch("admin")}
             >
-              Instant Demo Login (Admin)
-            </button>
+              Sign In / Select Role
+            </Link>
           </div>
         )}
       </div>

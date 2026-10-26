@@ -50,12 +50,34 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="header-actions">
-          <Link to="/register" className="btn btn-primary btn-sm">
-            + Register Land
-          </Link>
-          <Link to="/verify" className="btn btn-outline btn-sm">
-            🔍 Verify Deed
-          </Link>
+          {user?.role === "viewer" ? (
+            <>
+              <Link to="/properties" className="btn btn-primary btn-sm">
+                🔍 Browse Directory
+              </Link>
+              <Link to="/verify" className="btn btn-outline btn-sm">
+                🛡️ Verify Deed
+              </Link>
+            </>
+          ) : user?.role === "admin" ? (
+            <>
+              <Link to="/register" className="btn btn-primary btn-sm">
+                + Register Land
+              </Link>
+              <Link to="/admin" className="btn btn-outline btn-sm">
+                ⚙️ Admin Panel
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link to="/register" className="btn btn-primary btn-sm">
+                + Register Land
+              </Link>
+              <Link to="/transfer" className="btn btn-outline btn-sm">
+                🔄 Transfer Title
+              </Link>
+            </>
+          )}
         </div>
       </div>
 
@@ -63,49 +85,141 @@ export default function DashboardPage() {
 
       {/* Hero Action Cards */}
       <div className="dashboard-hero-grid mb-6">
-        <Link to="/register" className="dashboard-action-card card-register">
-          <div className="action-card-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-            </svg>
-          </div>
-          <div className="action-card-content">
-            <h4>Register Land Parcel</h4>
-            <p>Mint new parcel metadata, attach title deed, and compute cryptographic digest.</p>
-            <span className="card-cta-link">Start Registration →</span>
-          </div>
-        </Link>
+        {user?.role === "viewer" ? (
+          <>
+            <Link to="/properties" className="dashboard-action-card card-register">
+              <div className="action-card-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                  <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+              </div>
+              <div className="action-card-content">
+                <h4>Property Directory</h4>
+                <p>Search, filter, and review verified land parcels, surveys, and ownership deeds.</p>
+                <span className="card-cta-link">Explore Listings →</span>
+              </div>
+            </Link>
 
-        <Link to="/verify" className="dashboard-action-card card-verify">
-          <div className="action-card-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-              <polyline points="9 12 11 14 15 10"></polyline>
-            </svg>
-          </div>
-          <div className="action-card-content">
-            <h4>Verify Title Deed</h4>
-            <p>Upload any deed file to check raw byte integrity against the blockchain record.</p>
-            <span className="card-cta-link">Verify Document →</span>
-          </div>
-        </Link>
+            <Link to="/verify" className="dashboard-action-card card-verify">
+              <div className="action-card-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                  <polyline points="9 12 11 14 15 10"></polyline>
+                </svg>
+              </div>
+              <div className="action-card-content">
+                <h4>Verify Title Deed</h4>
+                <p>Upload any deed file to check cryptographic hash against the blockchain ledger.</p>
+                <span className="card-cta-link">Verify Document →</span>
+              </div>
+            </Link>
 
-        <Link to="/transfer" className="dashboard-action-card card-transfer">
-          <div className="action-card-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="17 1 21 5 17 9"></polyline>
-              <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
-              <polyline points="7 23 3 19 7 15"></polyline>
-              <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
-            </svg>
-          </div>
-          <div className="action-card-content">
-            <h4>Transfer Ownership</h4>
-            <p>Execute authorized title conveyance to a new owner wallet address.</p>
-            <span className="card-cta-link">Transfer Title →</span>
-          </div>
-        </Link>
+            <Link to="/history" className="dashboard-action-card card-transfer">
+              <div className="action-card-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </div>
+              <div className="action-card-content">
+                <h4>Transaction Ledger</h4>
+                <p>Transparent public record of immutable blockchain transfers and settlements.</p>
+                <span className="card-cta-link">View Ledger →</span>
+              </div>
+            </Link>
+          </>
+        ) : user?.role === "admin" ? (
+          <>
+            <Link to="/register" className="dashboard-action-card card-register">
+              <div className="action-card-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </div>
+              <div className="action-card-content">
+                <h4>Register Land Parcel</h4>
+                <p>Mint new parcel metadata, attach title deed, and compute cryptographic digest.</p>
+                <span className="card-cta-link">Start Registration →</span>
+              </div>
+            </Link>
+
+            <Link to="/admin" className="dashboard-action-card card-transfer">
+              <div className="action-card-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+              </div>
+              <div className="action-card-content">
+                <h4>Cadastral Control Panel</h4>
+                <p>Inspect consensus status, pending reconciliation, and immutable system audit logs.</p>
+                <span className="card-cta-link">Open Control Panel →</span>
+              </div>
+            </Link>
+
+            <Link to="/verify" className="dashboard-action-card card-verify">
+              <div className="action-card-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                  <polyline points="9 12 11 14 15 10"></polyline>
+                </svg>
+              </div>
+              <div className="action-card-content">
+                <h4>Verify Title Deed</h4>
+                <p>Check raw byte integrity against the blockchain record.</p>
+                <span className="card-cta-link">Verify Document →</span>
+              </div>
+            </Link>
+          </>
+        ) : (
+          <>
+            <Link to="/register" className="dashboard-action-card card-register">
+              <div className="action-card-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </div>
+              <div className="action-card-content">
+                <h4>Register Land Parcel</h4>
+                <p>Submit title deed application and compute cryptographic hash for verification.</p>
+                <span className="card-cta-link">Start Registration →</span>
+              </div>
+            </Link>
+
+            <Link to="/transfer" className="dashboard-action-card card-transfer">
+              <div className="action-card-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="17 1 21 5 17 9"></polyline>
+                  <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+                  <polyline points="7 23 3 19 7 15"></polyline>
+                  <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+                </svg>
+              </div>
+              <div className="action-card-content">
+                <h4>Transfer Ownership</h4>
+                <p>Execute authorized title conveyance to a new owner wallet address.</p>
+                <span className="card-cta-link">Transfer Title →</span>
+              </div>
+            </Link>
+
+            <Link to="/verify" className="dashboard-action-card card-verify">
+              <div className="action-card-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                  <polyline points="9 12 11 14 15 10"></polyline>
+                </svg>
+              </div>
+              <div className="action-card-content">
+                <h4>Verify Title Deed</h4>
+                <p>Upload deed file to check raw byte integrity against the blockchain record.</p>
+                <span className="card-cta-link">Verify Document →</span>
+              </div>
+            </Link>
+          </>
+        )}
       </div>
 
       {/* Summary Cards */}

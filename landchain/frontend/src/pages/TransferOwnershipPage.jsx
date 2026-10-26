@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { getProperties, getProperty, transferProperty, getUser } from "../services/api";
 import AddressCopy from "../components/AddressCopy";
 import ErrorDisplay from "../components/ErrorDisplay";
@@ -98,6 +98,28 @@ export default function TransferOwnershipPage() {
     user.wallet_address.toLowerCase() === selectedProperty.current_owner_address.toLowerCase();
 
   const isAuthority = user?.role === "admin" || !user;
+
+  if (user?.role === "viewer") {
+    return (
+      <div className="page-container">
+        <div className="empty-state-box" style={{ padding: "3.5rem 2rem", textAlign: "center", background: "var(--card-bg)", borderRadius: "var(--radius-lg)", border: "1px solid var(--border-color)", margin: "2rem auto", maxWidth: "600px" }}>
+          <div style={{ fontSize: "2.8rem", marginBottom: "1rem" }}>🔄</div>
+          <h2 style={{ fontSize: "1.4rem", fontWeight: "700", marginBottom: "0.5rem" }}>Ownership Transfer Restricted</h2>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", lineHeight: "1.6", marginBottom: "1.75rem" }}>
+            As a <strong>Public Citizen / Viewer</strong>, you do not have permission to execute land title transfers. Only verified <strong>Property Owners</strong> and <strong>Cadastral Officers</strong> can transfer ownership deeds.
+          </p>
+          <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+            <Link to="/properties" className="btn btn-primary btn-sm">
+              Explore Property Directory
+            </Link>
+            <Link to="/verify" className="btn btn-outline btn-sm">
+              Verify Title Deed
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page-container">
