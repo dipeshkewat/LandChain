@@ -180,28 +180,38 @@ Any byte modification invalidates the SHA-256 integrity digest.
         <div className="form-section-title">Parcel Metadata</div>
         <div className="form-grid">
           <div className="form-group">
-            <label htmlFor="property_code">Property Code *</label>
+            <label htmlFor="property_code">
+              Property Code / Survey No. *
+            </label>
             <input
               id="property_code"
               type="text"
               value={form.property_code}
               onChange={(e) => updateField("property_code", e.target.value)}
-              placeholder="e.g. LAND-1004"
+              placeholder="e.g. SURVEY-88 or LAND-1004"
               required
               maxLength={80}
             />
+            <span className="text-xs text-muted mt-1 block">
+              Official Survey No., Khasra No., or Cadastral Plot Code from the physical title deed.
+            </span>
           </div>
 
           <div className="form-group">
-            <label htmlFor="blockchain_property_id">Blockchain Property ID</label>
+            <label htmlFor="blockchain_property_id">
+              Blockchain Property ID <span className="text-muted font-normal text-xs">(Auto-assigned)</span>
+            </label>
             <input
               id="blockchain_property_id"
               type="number"
               value={form.blockchain_property_id}
               onChange={(e) => updateField("blockchain_property_id", e.target.value)}
-              placeholder="Auto-assigned if left blank"
+              placeholder="Leave blank — Smart Contract auto-mints"
               min="1"
             />
+            <span className="text-xs text-muted mt-1 block">
+              Optional: The smart contract automatically generates a sequential token ID if left empty.
+            </span>
           </div>
 
           <div className="form-group">
@@ -231,7 +241,9 @@ Any byte modification invalidates the SHA-256 integrity digest.
           </div>
 
           <div className="form-group">
-            <label htmlFor="owner_address">Initial Owner Wallet Address *</label>
+            <label htmlFor="owner_address">
+              Initial Owner Wallet Address * <span className="text-muted font-normal text-xs">(Auto-detected)</span>
+            </label>
             <input
               id="owner_address"
               type="text"
@@ -241,6 +253,9 @@ Any byte modification invalidates the SHA-256 integrity digest.
               pattern="^0x[a-fA-F0-9]{40}$"
               required
             />
+            <span className="text-xs text-muted mt-1 block">
+              Automatically populated from your logged-in wallet/profile.
+            </span>
             <div className="quick-input-tags mt-1">
               <button
                 type="button"
