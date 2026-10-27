@@ -265,14 +265,14 @@ Any byte modification invalidates the SHA-256 integrity digest.
                 className="input-tag-btn"
                 onClick={() => updateField("owner_address", "0x1234567890abcdef1234567890abcdef12345678")}
               >
-                Use Admin Wallet
+                Use Dipesh Kewat (Admin)
               </button>
               <button
                 type="button"
                 className="input-tag-btn"
                 onClick={() => updateField("owner_address", "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd")}
               >
-                Use Demo Owner Wallet
+                Use Chirag Khaire (Owner)
               </button>
             </div>
           </div>

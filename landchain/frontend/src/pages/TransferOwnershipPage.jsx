@@ -254,14 +254,14 @@ export default function TransferOwnershipPage() {
                 className="input-tag-btn"
                 onClick={() => setRecipientAddress("0xabcdefabcdefabcdefabcdefabcdefabcdefabcd")}
               >
-                Send to Demo Owner
+                Send to Chirag Khaire (Owner)
               </button>
               <button
                 type="button"
                 className="input-tag-btn"
                 onClick={() => setRecipientAddress("0x1234567890abcdef1234567890abcdef12345678")}
               >
-                Send to Demo Admin
+                Send to Dipesh Kewat (Admin)
               </button>
               <button
                 type="button"

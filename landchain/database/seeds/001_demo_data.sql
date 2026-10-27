@@ -5,23 +5,23 @@
 INSERT INTO users (id, name, email, password_hash, wallet_address, role)
 VALUES (
     'a0000000-0000-0000-0000-000000000001',
-    'Admin Authority',
+    'Dipesh Kewat',
     'admin@landchain.demo',
     '$2b$10$iBxN6JEzldjS2pEug.c4C.OwR08L5p5YkcxTMGLIkvzCeT.z5YicO',
     '0x1234567890abcdef1234567890abcdef12345678',
     'admin'
-) ON CONFLICT (email) DO NOTHING;
+) ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, wallet_address = EXCLUDED.wallet_address;
 
 -- Demo property owner
 INSERT INTO users (id, name, email, password_hash, wallet_address, role)
 VALUES (
     'a0000000-0000-0000-0000-000000000002',
-    'Demo Owner',
+    'Chirag Khaire',
     'owner@landchain.demo',
     '$2b$10$iBxN6JEzldjS2pEug.c4C.OwR08L5p5YkcxTMGLIkvzCeT.z5YicO',
     '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd',
     'owner'
-) ON CONFLICT (email) DO NOTHING;
+) ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, wallet_address = EXCLUDED.wallet_address;
 
 -- Demo viewer
 INSERT INTO users (id, name, email, password_hash, wallet_address, role)

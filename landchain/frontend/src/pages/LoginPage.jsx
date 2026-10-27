@@ -70,7 +70,7 @@ export default function LoginPage() {
               disabled={loading}
             >
               <span className="demo-card-badge admin-badge">Registrar Admin</span>
-              <span className="demo-card-name">Admin Authority</span>
+              <span className="demo-card-name">Dipesh Kewat</span>
               <span className="demo-card-sub">Full cadastre privileges</span>
             </button>
             <button
@@ -80,7 +80,7 @@ export default function LoginPage() {
               disabled={loading}
             >
               <span className="demo-card-badge owner-badge">Property Owner</span>
-              <span className="demo-card-name">Demo Owner</span>
+              <span className="demo-card-name">Chirag Khaire</span>
               <span className="demo-card-sub">Title holder wallet</span>
             </button>
             <button

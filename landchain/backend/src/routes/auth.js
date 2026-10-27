@@ -124,13 +124,31 @@ router.post("/demo-login", async (req, res, next) => {
     let user = result.rows[0];
     if (!user) {
       // Fallback if not seeded
-      user = {
-        id: "a0000000-0000-0000-0000-000000000001",
-        name: "Admin Authority",
-        email: "admin@landchain.demo",
-        wallet_address: "0x1234567890abcdef1234567890abcdef12345678",
-        role: "admin",
-      };
+      if (role === "owner") {
+        user = {
+          id: "a0000000-0000-0000-0000-000000000002",
+          name: "Chirag Khaire",
+          email: "owner@landchain.demo",
+          wallet_address: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+          role: "owner",
+        };
+      } else if (role === "viewer") {
+        user = {
+          id: "a0000000-0000-0000-0000-000000000003",
+          name: "Public Viewer",
+          email: "viewer@landchain.demo",
+          wallet_address: null,
+          role: "viewer",
+        };
+      } else {
+        user = {
+          id: "a0000000-0000-0000-0000-000000000001",
+          name: "Dipesh Kewat",
+          email: "admin@landchain.demo",
+          wallet_address: "0x1234567890abcdef1234567890abcdef12345678",
+          role: "admin",
+        };
+      }
     }
 
     const token = generateToken(user);
